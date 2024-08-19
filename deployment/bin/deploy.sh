@@ -15,14 +15,14 @@ git config --global --add safe.directory $PROJECT_DIR
 
 # the project has not been cloned yet (first deploy)
 if [ ! -d $PROJECT_DIR"/.git" ]; then
-  GIT_SSH_COMMAND='ssh -i /home/martin/.ssh/id_rsa -o IdentitiesOnly=yes' git clone git@github.com:mmartinjoo/devops-with-laravel-sample.git .
+  GIT_SSH_COMMAND='ssh -i /home/phuocnguyen/.ssh/id_rsa -o IdentitiesOnly=yes' git clone git@github.com:shishima123/devops-with-laravel-sample.git .
 else
-  GIT_SSH_COMMAND='ssh -i /home/martin/.ssh/id_rsa -o IdentitiesOnly=yes' git pull
+  GIT_SSH_COMMAND='ssh -i /home/phuocnguyen/.ssh/id_rsa -o IdentitiesOnly=yes' git pull
 fi
 
 cd $PROJECT_DIR"/frontend"
-npm install
-npm run build
+yarn install
+yarn build
 
 cd $PROJECT_DIR"/api"
 
