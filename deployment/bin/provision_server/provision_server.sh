@@ -16,7 +16,7 @@ cd $PROJECT_DIR
 git config --global --add safe.directory $PROJECT_DIR
 
 if [ ! -d $PROJECT_DIR"/.git" ]; then
-  GIT_SSH_COMMAND='ssh -i ~/.ssh/id_rsa -o IdentitiesOnly=yes' git clone git@github.com:mmartinjoo/devops-with-laravel-sample.git .
+  GIT_SSH_COMMAND='ssh -i ~/.ssh/id_rsa -o IdentitiesOnly=yes' git clone git@github.com:shishima123/devops-with-laravel-sample.git .
   cp $PROJECT_DIR"/api/.env.example" $PROJECT_DIR"/api/.env"
   sed -i "/DB_PASSWORD/c\DB_PASSWORD=$MYSQL_PASSWORD" $PROJECT_DIR"/api/.env"
   sed -i '/QUEUE_CONNECTION/c\QUEUE_CONNECTION=database' $PROJECT_DIR"/api/.env"
@@ -35,6 +35,17 @@ mv ./node-v14.21.3-linux-x64/bin/node /usr/bin/node
 ln -s /usr/lib/node-v14.21.3-linux-x64/lib/node_modules/npm/bin/npm-cli.js /usr/bin/npm
 ln -s /usr/lib/node-v14.21.3-linux-x64/lib/node_modules/npx/bin/npx-cli.js /usr/bin/npx
 
+npm install --global yarn
+
+# webserver
+apt update -y
+apt install nginx -y
+
+# SQL
+apt install mysql-server -y
+mysql -uroot -p$MYSQL_PASSWORD < $PROJECT_DIR"/deployment/config/mysql/set_native_password.sql"
+mysql -uroot -p$MYSQL_PASSWORD < $PROJECT_DIR"/deployment/config/mysql/create_database.sql" || echo "Database already exists"
+
 # php 8.1
 add-apt-repository ppa:ondrej/php -y
 apt update -y
@@ -52,14 +63,11 @@ apt install net-tools -y
 apt install supervisor -y
 apt install unzip
 
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
-mv composer.phar /usr/bin/composer
-
-mysql -uroot -p$MYSQL_PASSWORD < $PROJECT_DIR"/deployment/config/mysql/create_database.sql" || echo "Database already exists"
-mysql -uroot -p$MYSQL_PASSWORD < $PROJECT_DIR"/deployment/config/mysql/set_native_password.sql"
+cd ~
+curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php
+HASH=`curl -sS https://composer.github.io/installer.sig`
+php -r "if (hash_file('SHA384', '/tmp/composer-setup.php') === '$HASH') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
 echo "* * * * * cd $PROJECT_DIR && php artisan schedule:run >> /dev/null 2>&1" >> cron_tmp
 crontab cron_tmp
@@ -67,25 +75,26 @@ rm cron_tmp
 
 cp $PROJECT_DIR"/deployment/config/supervisor/logrotate" /etc/logrotate.d/supervisor
 
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-./aws/install
+#curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#unzip awscliv2.zip
+#./aws/install
 
-aws configure
+#aws configure
 
-useradd -G www-data,root -u 1000 -d /home/martin martin
-mkdir -p /home/martin/.ssh
-touch /home/martin/.ssh/authorized_keys
-chown -R martin:martin /home/martin
-chown -R martin:martin /var/www/html
-chmod 700 /home/martin/.ssh
-chmod 644 /home/martin/.ssh/authorized_keys
+useradd -G www-data,root -u 1000 -d /home/phuocnguyen phuocnguyen
+mkdir -p /home/phuocnguyen/.ssh
+touch /home/phuocnguyen/.ssh/authorized_keys
+chown -R phuocnguyen:phuocnguyen /home/phuocnguyen
+chown -R phuocnguyen:phuocnguyen /var/www/html
+chmod 700 /home/phuocnguyen/.ssh
+chmod 644 /home/phuocnguyen/.ssh/authorized_keys
 
-echo "$SSH_KEY" >> /home/martin/.ssh/authorized_keys
+echo "$SSH_KEY" >> /home/phuocnguyen/.ssh/authorized_keys
 
-echo "martin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/martin
+echo "phuocnguyen ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/phuocnguyen
 
 php -v
 node -v
 npm -v
-aws --version
+yarn -v
+#aws --version
